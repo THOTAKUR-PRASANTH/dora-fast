@@ -150,8 +150,9 @@ export default function UploadFiles() {
 
   async function uploadFile() {
     if (!file || busy) return;
+    const selectedFile = file;
 
-    const validationError = validateFile(file);
+    const validationError = validateFile(selectedFile);
     if (validationError) {
       setView({ status: "error", progress: 0, speed: "0 B/s", message: "Validation failed.", error: validationError });
       return;
@@ -164,7 +165,7 @@ export default function UploadFiles() {
       const initResponse = await fetch("/api/upload/init", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ filename: file.name, size: file.size }),
+        body: JSON.stringify({ filename: selectedFile.name, size: selectedFile.size }),
       });
       if (!initResponse.ok) {
         throw new Error(await readError(initResponse, "Could not start the upload. Please try again."));
@@ -181,7 +182,7 @@ export default function UploadFiles() {
       if (chunkSize < MIN_PART_SIZE) {
         throw new Error("The upload service returned an invalid part size. Please check the multipart upload configuration.");
       }
-      const partCount = Math.ceil(file.size / chunkSize);
+      const partCount = Math.ceil(selectedFile.size / chunkSize);
       if (partCount < 1 || partCount > MAX_PARTS) {
         throw new Error("This file cannot be split into a valid number of upload parts. Please contact support.");
       }
@@ -200,7 +201,7 @@ export default function UploadFiles() {
 
           const partNumber = index + 1;
           const start = index * chunkSize;
-          const blob = file.slice(start, Math.min(start + chunkSize, file.size));
+          const blob = selectedFile.slice(start, Math.min(start + chunkSize, selectedFile.size));
           let etag = "";
           let partError: unknown;
 
@@ -225,7 +226,7 @@ export default function UploadFiles() {
                 const elapsedSeconds = Math.max((Date.now() - startedAt) / 1000, 0.1);
                 setView({
                   status: "uploading",
-                  progress: Math.min(99, (transferred / file.size) * 100),
+                  progress: Math.min(99, (transferred / selectedFile.size) * 100),
                   speed: formatSpeed(transferred / elapsedSeconds),
                   message: `Uploading part ${partNumber} of ${partCount}…`,
                 });

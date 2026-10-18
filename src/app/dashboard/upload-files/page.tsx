@@ -12,3 +12,5 @@ export default async function UploadFilesPage() {
 
   return <UploadFiles />;
 }
+
+
