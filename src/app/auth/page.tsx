@@ -2,13 +2,13 @@
 
 import {
   FormEvent,
-  useEffect,
   useState,
   type ButtonHTMLAttributes,
   type InputHTMLAttributes,
   type ReactNode,
 } from "react";
 import dynamic from "next/dynamic";
+import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 
 // Loaded once at module level (client only) so the animation never remounts on re-render.
@@ -18,6 +18,14 @@ const Player = dynamic(
 );
 
 const AUTH_CARD_CSS = `
+.sw-grid {
+  background-image:
+    linear-gradient(to right, #161616 1px, transparent 1px),
+    linear-gradient(to bottom, #161616 1px, transparent 1px);
+  background-size: 3rem 3rem;
+  -webkit-mask-image: radial-gradient(ellipse 60% 50% at 50% 0%, #000 70%, transparent 110%);
+  mask-image: radial-gradient(ellipse 60% 50% at 50% 0%, #000 70%, transparent 110%);
+}
 .auth-card::before,
 .auth-card::after {
   content: "";
@@ -148,7 +156,12 @@ function Lottie({
 export default function AuthPage() {
   const [supabase] = useState(() => createClient());
 
-  const [mode, setMode] = useState<Mode>("signup");
+  const [mode, setMode] = useState<Mode>(() => {
+    if (typeof window === "undefined") return "signup";
+
+    const m = new URLSearchParams(window.location.search).get("mode");
+    return m === "login" || m === "signup" ? m : "signup";
+  });
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -156,12 +169,6 @@ export default function AuthPage() {
   const [message, setMessage] = useState("");
   const [messageType, setMessageType] = useState<"error" | "success">("error");
   const [loading, setLoading] = useState(false);
-
-  // /auth?mode=login opens the sign-in view
-  useEffect(() => {
-    const m = new URLSearchParams(window.location.search).get("mode");
-    if (m === "login" || m === "signup") setMode(m);
-  }, []);
 
   const isSignup = mode === "signup";
 
@@ -211,7 +218,7 @@ export default function AuthPage() {
   }
 
   return (
-    <main className="relative flex min-h-[100dvh] items-center justify-center overflow-x-hidden bg-background px-3 py-6 sm:px-4">
+    <main className="relative flex min-h-[100dvh] items-center justify-center overflow-x-hidden bg-[#0a0a0a] px-3 py-6 sm:px-4">
       <style dangerouslySetInnerHTML={{ __html: AUTH_CARD_CSS }} />
       <div aria-hidden="true" className="sw-grid pointer-events-none absolute inset-0 h-full" />
 
@@ -333,6 +340,16 @@ export default function AuthPage() {
                     </button>
                   </div>
                 </div>
+                {!isSignup && (
+                  <div className="-mt-2 flex justify-end">
+                    <Link
+                      href="/auth/forgot-password"
+                      className="text-sm text-purple-300 transition hover:text-purple-200 hover:underline"
+                    >
+                      Forgot password?
+                    </Link>
+                  </div>
+                )}
 
                 <SubmitButton type="submit" disabled={loading} isLoading={loading}>
                   {isSignup ? "Continue" : "Sign In"}

@@ -143,7 +143,12 @@ export default function FilesManager({ initialFiles, loadError }: { initialFiles
             <div className="mt-5 flex flex-col items-center rounded-xl border border-dashed border-white/10 bg-white/[0.015] px-6 py-14 text-center">
               <div className="flex h-14 w-14 items-center justify-center rounded-2xl border border-violet-300/15 bg-violet-300/[0.06] text-2xl text-violet-200">▤</div>
               <h3 className="mt-4 text-lg font-semibold">Your library is ready</h3><p className="mt-2 max-w-sm text-sm leading-6 text-zinc-500">Once you upload a file, it will appear here with its size, date, and available actions.</p>
-              <a href="/dashboard/upload-files" className="mt-5 inline-flex h-10 items-center rounded-lg bg-white px-4 text-sm font-semibold text-zinc-950 transition hover:bg-violet-100">Upload your first file →</a>
+              <a
+  href="/dashboard/upload-files"
+  className="mt-5 inline-flex h-10 items-center rounded-lg bg-gradient-to-r from-purple-600 via-fuchsia-500 to-pink-500 px-4 text-sm font-semibold text-white shadow-lg shadow-purple-500/25 transition-all duration-300 hover:from-purple-500 hover:via-fuchsia-400 hover:to-pink-400 hover:shadow-pink-500/30 active:scale-95"
+>
+  Upload your first file →
+</a>
             </div>
           ) : visibleFiles.length === 0 ? (
             <div className="py-14 text-center"><p className="font-medium text-zinc-200">No matching files</p><p className="mt-2 text-sm text-zinc-500">Try a different search term.</p><button onClick={() => setQuery("")} className="mt-4 text-sm text-violet-200 hover:text-white">Clear search</button></div>

@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import DashboardHeader from "@/components/dashboard/header";
 import ThemeStyles from "@/components/dashboard/theme-styles";
+import CurrentYear from "@/components/dashboard/current-year";
 
 function DashboardLoading() {
   return (
@@ -54,7 +55,7 @@ async function AuthenticatedDashboard({
         </main>
 
         <footer className="mx-auto flex w-full max-w-6xl flex-col gap-2 border-t border-white/10 px-4 py-5 text-xs text-zinc-500 sm:flex-row sm:items-center sm:justify-between sm:px-6">
-          <span>© {new Date().getFullYear()} Dora-Fast</span>
+          <span>© <CurrentYear /> Dora-Fast</span>
           <span>
             Private storage · Multipart uploads · Supabase authentication
           </span>

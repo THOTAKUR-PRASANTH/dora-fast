@@ -1,3 +1,4 @@
+
 "use client";
 
 import { FormEvent, useState, type InputHTMLAttributes, type ReactNode } from "react";
@@ -17,7 +18,15 @@ function Input(props: InputHTMLAttributes<HTMLInputElement>) {
   );
 }
 
-function Field({ id, label, children }: { id: string; label: string; children: ReactNode }) {
+function Field({
+  id,
+  label,
+  children,
+}: {
+  id: string;
+  label: string;
+  children: ReactNode;
+}) {
   return (
     <div className="space-y-1">
       <label htmlFor={id} className="text-sm font-medium text-gray-200">
@@ -28,7 +37,13 @@ function Field({ id, label, children }: { id: string; label: string; children: R
   );
 }
 
-function SaveButton({ loading, children }: { loading: boolean; children: ReactNode }) {
+function SaveButton({
+  loading,
+  children,
+}: {
+  loading: boolean;
+  children: ReactNode;
+}) {
   return (
     <button
       type="submit"
@@ -39,16 +54,19 @@ function SaveButton({ loading, children }: { loading: boolean; children: ReactNo
     >
       {loading && (
         <span className="absolute inset-0 flex items-center justify-center">
-          <span className="h-5 w-5 animate-spin rounded-full border-2 border-transparent border-t-purple-300 shadow-[0_0_8px_rgba(192,132,252,0.5)]" />
+          <span className="h-5 w-5 animate-spin rounded-full border-2 border-transparent border-t-purple-300" />
         </span>
       )}
-      <span className={`transition-opacity duration-200 ${loading ? "opacity-0" : "opacity-100"}`}>{children}</span>
+      <span className={loading ? "opacity-0" : "opacity-100"}>
+        {children}
+      </span>
     </button>
   );
 }
 
 function StatusMessage({ status }: { status: Status }) {
   if (!status) return null;
+
   return (
     <p
       role="status"
@@ -86,139 +104,192 @@ function Section({
   );
 }
 
-export default function SettingsForm({ initialName, initialEmail }: { initialName: string; initialEmail: string }) {
+export default function SettingsForm({
+  initialName,
+  initialEmail,
+}: {
+  initialName: string;
+  initialEmail: string;
+}) {
   const router = useRouter();
   const [supabase] = useState(() => createClient());
 
   const [name, setName] = useState(initialName);
-  const [email, setEmail] = useState(initialEmail);
-  const [currentEmail] = useState(initialEmail);
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
   const [showPassword, setShowPassword] = useState(false);
 
-  const [busy, setBusy] = useState<"profile" | "email" | "password" | null>(null);
+  const [busy, setBusy] = useState<"profile" | "password" | null>(null);
   const [profileStatus, setProfileStatus] = useState<Status>(null);
-  const [emailStatus, setEmailStatus] = useState<Status>(null);
   const [passwordStatus, setPasswordStatus] = useState<Status>(null);
 
   async function saveProfile(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
-    setBusy("profile");
     setProfileStatus(null);
-    const { error } = await supabase.auth.updateUser({ data: { name: name.trim() } });
-    if (error) {
-      setProfileStatus({ type: "error", text: error.message });
-    } else {
-      setProfileStatus({ type: "success", text: "Profile updated." });
-      router.refresh();
-    }
-    setBusy(null);
-  }
 
-  async function saveEmail(e: FormEvent<HTMLFormElement>) {
-    e.preventDefault();
-    setEmailStatus(null);
-    const next = email.trim();
-    if (next.toLowerCase() === currentEmail.toLowerCase()) {
-      setEmailStatus({ type: "error", text: "That’s already your email address." });
+    const trimmedName = name.trim();
+
+    if (!trimmedName) {
+      setProfileStatus({
+        type: "error",
+        text: "Username cannot be empty.",
+      });
       return;
     }
-    setBusy("email");
-    const { error } = await supabase.auth.updateUser(
-      { email: next },
-      { emailRedirectTo: `${window.location.origin}/auth/callback` }
-    );
-    if (error) {
-      setEmailStatus({ type: "error", text: error.message });
-    } else {
-      setEmailStatus({
-        type: "success",
-        text: "Confirmation sent. Open the link in your inbox to finish changing your email (you may need to confirm from your old address too).",
+
+    if (trimmedName.length > 80) {
+      setProfileStatus({
+        type: "error",
+        text: "Username must be 80 characters or fewer.",
       });
+      return;
     }
-    setBusy(null);
+
+    setBusy("profile");
+
+    try {
+      const { error } = await supabase.auth.updateUser({
+        data: { name: trimmedName },
+      });
+
+      if (error) {
+        setProfileStatus({ type: "error", text: error.message });
+      } else {
+        setName(trimmedName);
+        setProfileStatus({
+          type: "success",
+          text: "Username updated successfully.",
+        });
+        router.refresh();
+      }
+    } catch {
+      setProfileStatus({
+        type: "error",
+        text: "Unable to update your username. Please try again.",
+      });
+    } finally {
+      setBusy(null);
+    }
   }
 
   async function savePassword(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setPasswordStatus(null);
+
     if (password.length < 8) {
-      setPasswordStatus({ type: "error", text: "Password must be at least 8 characters." });
+      setPasswordStatus({
+        type: "error",
+        text: "Password must be at least 8 characters.",
+      });
       return;
     }
+
     if (password !== confirm) {
-      setPasswordStatus({ type: "error", text: "Passwords don’t match." });
+      setPasswordStatus({
+        type: "error",
+        text: "Passwords do not match.",
+      });
       return;
     }
+
     setBusy("password");
-    const { error } = await supabase.auth.updateUser({ password });
-    if (error) {
-      setPasswordStatus({ type: "error", text: error.message });
-    } else {
-      setPasswordStatus({ type: "success", text: "Password updated." });
-      setPassword("");
-      setConfirm("");
+
+    try {
+      const { error } = await supabase.auth.updateUser({ password });
+
+      if (error) {
+        setPasswordStatus({ type: "error", text: error.message });
+      } else {
+        setPasswordStatus({
+          type: "success",
+          text: "Password updated successfully.",
+        });
+        setPassword("");
+        setConfirm("");
+      }
+    } catch {
+      setPasswordStatus({
+        type: "error",
+        text: "Unable to update your password. Please try again.",
+      });
+    } finally {
+      setBusy(null);
     }
-    setBusy(null);
   }
 
   return (
     <div className="space-y-5">
-      {/* Profile card with the rotating border */}
+      {/* Profile and username */}
       <div className="pop-in" style={{ animationDelay: "0.1s" }}>
         <div className="auth-card relative overflow-hidden rounded-2xl bg-black/80 p-[2px] shadow-2xl shadow-black/40 backdrop-blur-lg">
           <div className="relative z-10 rounded-[14px] bg-black p-5 sm:p-8">
             <div className="mb-6 flex items-center gap-4">
               <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-violet-500/30 to-indigo-500/30 text-xl font-semibold text-violet-100">
-                {(name || currentEmail).charAt(0).toUpperCase()}
+                {(name || initialEmail).charAt(0).toUpperCase()}
               </div>
+
               <div className="min-w-0">
                 <h2 className="text-lg font-semibold">Profile</h2>
-                <p className="truncate text-sm text-zinc-400">{currentEmail}</p>
+                <p className="truncate text-sm text-zinc-400">
+                  Manage your username
+                </p>
               </div>
             </div>
 
             <form onSubmit={saveProfile} className="space-y-5">
-              <Field id="name" label="Name">
+              <Field id="name" label="Username">
                 <Input
                   id="name"
                   type="text"
-                  autoComplete="name"
+                  autoComplete="nickname"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
-                  placeholder="Your Name"
+                  placeholder="Enter your username"
                   disabled={busy !== null}
                   maxLength={80}
+                  required
                 />
               </Field>
+
               <StatusMessage status={profileStatus} />
-              <SaveButton loading={busy === "profile"}>Save changes</SaveButton>
+
+              <SaveButton loading={busy === "profile"}>
+                Save username
+              </SaveButton>
             </form>
           </div>
         </div>
       </div>
 
-      <Section title="Email address" description="We’ll email a confirmation link before the change applies." delay={0.2}>
-        <form onSubmit={saveEmail} className="space-y-5">
-          <Field id="email" label="Email">
-            <Input
-              id="email"
-              type="email"
-              autoComplete="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="you@example.com"
-              disabled={busy !== null}
-              required
-            />
-          </Field>
-          <StatusMessage status={emailStatus} />
-          <SaveButton loading={busy === "email"}>Update email</SaveButton>
-        </form>
+      {/* Read-only email */}
+      <Section
+        title="Email address"
+        description="Your registered email address cannot be changed here."
+        delay={0.2}
+      >
+        <Field id="email" label="Registered email">
+          <Input
+            id="email"
+            type="email"
+            value={initialEmail}
+            disabled
+            readOnly
+            aria-describedby="email-help"
+          />
+        </Field>
+
+        <p id="email-help" className="mt-3 text-xs text-zinc-500">
+          This email is linked to your Dora-Fast account and is displayed for
+          reference only.
+        </p>
       </Section>
 
-      <Section title="Password" description="Use at least 8 characters." delay={0.3}>
+      {/* Change password */}
+      <Section
+        title="Change password"
+        description="Choose a strong password with at least 8 characters."
+        delay={0.3}
+      >
         <form onSubmit={savePassword} className="space-y-5">
           <Field id="new-password" label="New password">
             <div className="relative">
@@ -229,19 +300,22 @@ export default function SettingsForm({ initialName, initialEmail }: { initialNam
                 minLength={8}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                placeholder="••••••••"
+                placeholder="Enter new password"
                 disabled={busy !== null}
                 required
               />
+
               <button
                 type="button"
-                onClick={() => setShowPassword((v) => !v)}
+                onClick={() => setShowPassword((value) => !value)}
                 className="absolute inset-y-0 right-4 flex items-center text-xs font-medium text-gray-400 hover:text-white"
+                aria-label={showPassword ? "Hide password" : "Show password"}
               >
                 {showPassword ? "Hide" : "Show"}
               </button>
             </div>
           </Field>
+
           <Field id="confirm-password" label="Confirm new password">
             <Input
               id="confirm-password"
@@ -250,13 +324,17 @@ export default function SettingsForm({ initialName, initialEmail }: { initialNam
               minLength={8}
               value={confirm}
               onChange={(e) => setConfirm(e.target.value)}
-              placeholder="••••••••"
+              placeholder="Confirm new password"
               disabled={busy !== null}
               required
             />
           </Field>
+
           <StatusMessage status={passwordStatus} />
-          <SaveButton loading={busy === "password"}>Update password</SaveButton>
+
+          <SaveButton loading={busy === "password"}>
+            Update password
+          </SaveButton>
         </form>
       </Section>
     </div>

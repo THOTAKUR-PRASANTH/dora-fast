@@ -82,7 +82,7 @@ export default function FilesList({ files, error }: { files: FileItem[]; error?:
             <p className="mt-1 max-w-sm text-sm text-zinc-400">Upload your first file and it will show up here.</p>
             <Link
               href={UPLOAD_HREF}
-              className="mt-5 inline-flex h-9 items-center justify-center rounded-lg bg-purple-600 px-5 text-sm font-medium text-white shadow-lg shadow-purple-600/20 transition hover:bg-purple-700 active:scale-95"
+              className="mt-5 inline-flex h-9 items-center justify-center rounded-lg bg-green-600 px-5 text-sm font-medium text-white shadow-lg shadow-green-600 transition hover:bg-green-500 active:scale-95"
             >
               Upload a file
             </Link>
