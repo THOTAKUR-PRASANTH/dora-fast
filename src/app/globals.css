@@ -1,26 +1,200 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  color-scheme: dark;
+  --background: #0a0a0a;
+  --foreground: #fafafa;
+  --muted-foreground: #a3a3a3;
+  --border: #262626;
+  --primary: #fafafa;
+  --primary-foreground: #171717;
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-border: var(--border);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --font-sans: Inter, Arial, Helvetica, sans-serif;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+* { box-sizing: border-box; }
+html {
+  min-height: 100%;
+  scroll-behavior: smooth;
+  background: var(--background);
+  overscroll-behavior: none;
+}
+body {
+  min-height: 100vh;
+  margin: 0;
+  background: var(--background);
+  color: var(--foreground);
+  font-family: Inter, Arial, Helvetica, sans-serif;
+}
+::selection { background: rgba(168, 85, 247, 0.25); color: var(--foreground); }
+button, input { font: inherit; }
+a { color: inherit; text-decoration: none; }
+a:focus-visible, button:focus-visible { outline: 2px solid #c4b5fd; outline-offset: 3px; }
+
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-thumb { background-color: #262626; border-radius: 3px; }
+::-webkit-scrollbar-track { background: rgba(0, 0, 0, 0); }
+
+/* ---------- Background grid (skill-swap marketing layout) ---------- */
+.sw-grid {
+  background-image:
+    linear-gradient(to right, #161616 1px, transparent 1px),
+    linear-gradient(to bottom, #161616 1px, transparent 1px);
+  background-size: 3rem 3rem;
+  -webkit-mask-image: radial-gradient(ellipse 60% 50% at 50% 0%, #000 70%, transparent 110%);
+  mask-image: radial-gradient(ellipse 60% 50% at 50% 0%, #000 70%, transparent 110%);
+}
+
+/* ---------- Gradient text (violet -> fuchsia) ---------- */
+.sw-gradient-text {
+  background-image: linear-gradient(to right, #8b5cf6, #d946ef);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+/* ---------- Glow behind the hero image ---------- */
+.sw-gradient {
+  background: conic-gradient(from 230.29deg at 51.63% 52.16%, rgb(36, 0, 255) 0deg, rgb(0, 135, 255) 67.5deg, rgb(108, 39, 157) 198.75deg, rgb(24, 38, 163) 251.25deg, rgb(54, 103, 196) 301.88deg, rgb(105, 30, 255) 360deg);
+}
+.animate-image-glow { animation: image-glow 4s ease-out 0.6s forwards; opacity: 0; }
+
+/* ---------- Spark badge (rotating light around the pill) ---------- */
+.spark-badge {
+  position: relative;
+  display: grid;
+  overflow: hidden;
+  border-radius: 9999px;
+  padding: 0.25rem 1rem;
+  box-shadow: 0 1000px 0 0 hsl(0 0% 20%) inset;
+  transition: color 0.2s;
+}
+.spark-badge .spark {
+  position: absolute;
+  inset: 0;
+  height: 100%;
+  width: 100%;
+  overflow: hidden;
+  border-radius: 9999px;
+  -webkit-mask: linear-gradient(white, transparent 50%);
+  mask: linear-gradient(white, transparent 50%);
+  animation: flip 6s infinite steps(2, end);
+}
+.spark-badge .spark::before {
+  content: "";
+  position: absolute;
+  aspect-ratio: 1 / 1;
+  width: 200%;
+  inset: 0 auto auto 50%;
+  translate: -50% -15%;
+  transform: rotate(-90deg);
+  background: conic-gradient(from 0deg, transparent 0 340deg, white 360deg);
+  animation: rotate 3s linear infinite both;
+}
+.spark-badge .backdrop {
+  position: absolute;
+  inset: 1px;
+  border-radius: 9999px;
+  background: #0a0a0a;
+  transition: background 0.2s;
+}
+.spark-badge:hover .backdrop { background: #171717; }
+
+@property --beam-angle {
+  syntax: "<angle>";
+  initial-value: 0deg;
+  inherits: false;
+}
+
+.border-beam {
+  position: absolute;
+  inset: 0;
+  z-index: 30;
+  border-radius: inherit;
+  pointer-events: none;
+  padding: calc(var(--border-width) * 1px);
+  background: conic-gradient(
+    from var(--beam-angle),
+    transparent 0%,
+    transparent 70%,
+    var(--color-from) 88%,
+    var(--color-to) 100%
+  );
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask: linear-gradient(#000 0 0) content-box exclude, linear-gradient(#000 0 0);
+  animation: beam-spin calc(var(--duration) * 1s) linear infinite;
+  animation-delay: var(--delay);
+}
+
+@keyframes beam-spin {
+  to {
+    --beam-angle: 360deg;
   }
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+/* ---------- Entrance animations (replaces framer-motion) ---------- */
+.fade-up { animation: fade-up 0.6s cubic-bezier(0.22, 1, 0.36, 1) both; }
+.fade-down { animation: fade-down 0.6s cubic-bezier(0.22, 1, 0.36, 1) both; }
+.line-change { animation: line-in 0.6s cubic-bezier(0.2, 0.75, 0.25, 1) both; }
+
+/* ---------- Footer text stroke draw-in ---------- */
+.stroke-draw {
+  stroke-dasharray: 1000;
+  stroke-dashoffset: 1000;
+  animation: stroke-draw 4s ease-in-out forwards;
+}
+
+@keyframes rotate { to { transform: rotate(90deg); } }
+@keyframes flip { to { transform: rotate(360deg); } }
+@keyframes border-beam { 100% { offset-distance: 100%; } }
+@keyframes image-glow {
+  0% { opacity: 0; animation-timing-function: cubic-bezier(0.74, 0.25, 0.76, 1); }
+  10% { opacity: 0.5; animation-timing-function: cubic-bezier(0.12, 0.01, 0.08, 0.99); }
+  100% { opacity: 0.7; }
+}
+@keyframes fade-up { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes fade-down { from { opacity: 0; transform: translateY(-20px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes line-in {
+  from { opacity: 0; transform: translateY(12px); filter: blur(7px); }
+  to { opacity: 1; transform: translateY(0); filter: blur(0); }
+}
+@keyframes stroke-draw { to { stroke-dashoffset: 0; } }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    scroll-behavior: auto !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* ---------- Auth card (skill-swap sign in / sign up) ---------- */
+.auth-card::before,
+.auth-card::after {
+  content: "";
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: conic-gradient(transparent, rgba(255, 255, 255, 0.7), transparent 15%);
+  animation: rotate-border 8s linear infinite;
+}
+.auth-card::after { animation-delay: -4s; }
+.pop-in { animation: pop-in 0.6s cubic-bezier(0.22, 1, 0.36, 1) both; }
+
+@keyframes rotate-border { to { transform: rotate(360deg); } }
+@keyframes pop-in {
+  from { opacity: 0; transform: translateY(20px) scale(0.95); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
 }
