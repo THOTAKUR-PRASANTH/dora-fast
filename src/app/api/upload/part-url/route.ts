@@ -2,23 +2,33 @@
 import { UploadPartCommand } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import { NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase/server";
+// import { createClient } from "@/lib/supabase/server";
+import { authenticateApiRequest } from "@/lib/supabase/api-auth";
 import { r2, R2_BUCKET_NAME } from "@/lib/r2";
 
 export async function POST(request: Request) {
-  const supabase = await createClient();
+  //const supabase = await createClient();
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  // const {
+  //   data: { user },
+  // } = await supabase.auth.getUser();
 
-  if (!user) {
+  // if (!user) {
+  //   return NextResponse.json(
+  //     { error: "Please log in first." },
+  //     { status: 401 }
+  //   );
+  // }
+    const auth = await authenticateApiRequest(request);
+
+  if (!auth.user || !auth.supabase) {
     return NextResponse.json(
-      { error: "Please log in first." },
-      { status: 401 }
+      { error: auth.error ?? "Please log in first." },
+      { status: auth.status }
     );
   }
 
+  const { supabase, user } = auth;
   try {
     const body = await request.json();
     const { key, uploadId, partNumber } = body;

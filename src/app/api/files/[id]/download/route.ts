@@ -2,8 +2,9 @@
 import { GetObjectCommand, S3Client } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import { NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase/server";
+// import { createClient } from "@/lib/supabase/server";
 import { FILES_TABLE } from "@/components/dashboard/config";
+import { authenticateApiRequest } from "@/lib/supabase/api-auth";
 
 function getObjectKey(row: Record<string, unknown>): string | null {
   for (const field of [
@@ -55,22 +56,33 @@ export async function GET(
       );
     }
 
-    const supabase = await createClient();
-    const { data: auth, error: authError } =
-      await supabase.auth.getUser();
+    // const supabase = await createClient();
+    // const { data: auth, error: authError } =
+    //   await supabase.auth.getUser();
 
-    if (authError || !auth.user) {
+    // if (authError || !auth.user) {
+    //   return NextResponse.json(
+    //     { error: "Please sign in to download this file." },
+    //     { status: 401 }
+    //   );
+    // }
+
+        const auth = await authenticateApiRequest(_request);
+
+    if (!auth.user || !auth.supabase) {
       return NextResponse.json(
-        { error: "Please sign in to download this file." },
-        { status: 401 }
+        { error: auth.error ?? "Please sign in to download this file." },
+        { status: auth.status }
       );
     }
 
-    const { data: row, error: lookupError } = await supabase
+    const { supabase, user } = auth;
+
+     const { data: row, error: lookupError } = await supabase
       .from(FILES_TABLE)
       .select("*")
       .eq("id", id)
-      .eq("owner_id", auth.user.id)
+      .eq("owner_id", user.id)
       .maybeSingle();
 
     if (lookupError) {

@@ -6,7 +6,8 @@ import {
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import { NextResponse } from "next/server";
 import { r2, R2_BUCKET_NAME } from "@/lib/r2";
-import { createClient } from "@/lib/supabase/server";
+// import { createClient } from "@/lib/supabase/server";
+import { authenticateApiRequest } from "@/lib/supabase/api-auth";
 
 function getContentType(filename: string): string {
   const extension = filename.split(".").pop()?.toLowerCase();
@@ -30,19 +31,30 @@ function getContentType(filename: string): string {
 
 export async function POST(request: Request) {
   try {
-    // 1. Verify the signed-in user.
-    const supabase = await createClient();
-    const {
-      data: { user },
-      error: authError,
-    } = await supabase.auth.getUser();
+    // // 1. Verify the signed-in user.
+    // const supabase = await createClient();
+    // const {
+    //   data: { user },
+    //   error: authError,
+    // } = await supabase.auth.getUser();
 
-    if (authError || !user) {
+    // if (authError || !user) {
+    //   return NextResponse.json(
+    //     { error: "Unauthorized. Please log in." },
+    //     { status: 401 }
+    //   );
+    // }
+
+        const auth = await authenticateApiRequest(request);
+
+    if (!auth.user || !auth.supabase) {
       return NextResponse.json(
-        { error: "Unauthorized. Please log in." },
-        { status: 401 }
+        { error: auth.error ?? "Unauthorized. Please log in." },
+        { status: auth.status }
       );
     }
+
+    const { supabase, user } = auth;
 
     // 2. Validate the storage key.
     const body = await request.json();

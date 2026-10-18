@@ -5,26 +5,36 @@ import {
 } from "@aws-sdk/client-s3";
 import { NextResponse } from "next/server";
 import { randomUUID } from "node:crypto";
-import { createClient } from "@/lib/supabase/server";
+//import { createClient } from "@/lib/supabase/server";
 import { r2, R2_BUCKET_NAME } from "@/lib/r2";
-
+import { authenticateApiRequest } from "@/lib/supabase/api-auth";
 const MAX_FILE_SIZE = 5 * 1024 * 1024 * 1024;
 const PART_SIZE = 16 * 1024 * 1024;
 
 export async function POST(request: Request) {
-  const supabase = await createClient();
+  //const supabase = await createClient();
+    const auth = await authenticateApiRequest(request);
 
-  const {
-    data: { user },
-    error: authError,
-  } = await supabase.auth.getUser();
-
-  if (authError || !user) {
+ if (!auth.user || !auth.supabase) {
     return NextResponse.json(
-      { error: "Please log in first." },
-      { status: 401 }
+      { error: auth.error ?? "Please log in first." },
+      { status: auth.status }
     );
   }
+
+  const { supabase,user } = auth;
+
+  // const {
+  //   data: { user },
+  //   error: authError,
+  // } = await supabase.auth.getUser();
+
+  // if (authError || !user) {
+  //   return NextResponse.json(
+  //     { error: "Please log in first." },
+  //     { status: 401 }
+  //   );
+  // }
 
   let key: string | undefined;
   let uploadId: string | undefined;
